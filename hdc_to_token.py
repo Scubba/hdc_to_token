@@ -3,10 +3,6 @@
 #this takes a .hdc file and the path to a sample token directory
 #reads the content.xml, replacing the xml
 
-#TODO
-# - emit existing powers as JSON
-# - emit missing powers
-
 import sys
 import shutil
 import os
@@ -57,7 +53,7 @@ def get_json(parent, list_of_tuples):
     for item in list_of_tuples:
         if (len(json) > 1):
             json = json + ","
-        json = json + '\"' + item[0] + '\":\"' + item[1] + '\"'
+        json = json + '\"' + item[0] + '\":\"' + item[1].replace('"',' in.') + '\"'
 
     json = json + "}"
     return json
@@ -74,6 +70,42 @@ def get_safe_attrib(element, key):
 def get_parent(element):
     return get_safe_attrib(element, 'PARENTID')
 
+def add_perks(hdc_root, token_root):
+    for map in token_root.findall('propertyMapCI'):
+        for store in map:
+            property_store = store
+
+    #get values from hdc
+    print('  Getting perks')
+    for list in hdc_root.findall('PERKS'):
+        count = 0
+        for perk in list:
+
+            add_token_property(
+                property_store,
+                'perks.perk{:02d}'.format(count),
+                get_perk_json(perk))
+
+            count = count + 1
+
+def add_talents(hdc_root, token_root):
+    for map in token_root.findall('propertyMapCI'):
+        for store in map:
+            property_store = store
+
+    #get values from hdc
+    print('  Getting talents')
+    for list in hdc_root.findall('TALENTS'):
+        count = 0
+        for talent in list:
+
+            add_token_property(
+                property_store,
+                'talents.talent{:02d}'.format(count),
+                get_talent_json(talent))
+
+            count = count + 1
+
 def add_disads(hdc_root, token_root):
     for map in token_root.findall('propertyMapCI'):
         for store in map:
@@ -88,7 +120,7 @@ def add_disads(hdc_root, token_root):
             add_token_property(
                 property_store,
                 'disadvantages.disad{:02d}'.format(disad_count),
-                get_disad_json(disad, characteristics))
+                get_disad_json(disad))
 
             disad_count = disad_count + 1
 
@@ -105,7 +137,35 @@ def get_mod_string(mod):
         return "+¾"
     if (mod == "-0.75"):
         return "-¾"
-    return mod
+    if (mod == "0.0"):
+        return ""
+
+    number_str = str(math.floor(float(mod)))
+    if (float(mod)>0):
+        number_str = "+"+number_str
+
+    return number_str
+
+def get_adder_tuple(element):
+    adders = ""
+    for sub in element.findall('ADDER'):
+        mod = get_safe_attrib(sub, 'BASECOST')
+        name = get_safe_attrib(sub, 'ALIAS')
+        more = get_safe_attrib(sub, 'OPTION_ALIAS')
+        comment = get_safe_attrib(sub, 'COMMENTS')
+        if (len(adders)):
+            adders = adders + ", "
+        if (len(name) and len(more)):
+            more = " " + more
+        mod_str = get_mod_string(mod)
+        if (len(comment) and len(mod_str)):
+            comment = comment + " "
+        if (len(comment) + len(mod_str)>0):
+            comment_str = " (" + comment + mod_str + ")"
+        else:
+            comment_str = ""
+        adders = adders + name + more + comment_str
+    return ("adders", adders)
 
 def get_modifier_tuple(element):
     modifiers = ""
@@ -124,6 +184,13 @@ def get_modifier_tuple(element):
         modifiers = modifiers + name + more + " (" + comment + mod_str + ")"
     return ("modifiers",modifiers)
 
+def get_half_die(element):
+    half_die = ""
+    for sub in element.findall('ADDER'):
+        if (sub.attrib['XMLID']=='PLUSONEHALFDIE'):
+            half_die = " ½"
+    return half_die
+
 def get_power_name_list(element):
     name = element.attrib['NAME']
     power_type = element.attrib['XMLID']
@@ -134,6 +201,7 @@ def get_power_name_list(element):
         name_list.append(("ultra","1"))
 
     name_list.append(get_modifier_tuple(element))
+    name_list.append(get_adder_tuple(element))
 
     return name_list
 
@@ -146,7 +214,8 @@ def get_extralimbs_json(element):
 def get_std_dice_power_json(element):
     name_list = get_power_name_list(element)
     levels=element.attrib['LEVELS']
-    name_list.append(("dice",levels))
+    half_die = get_half_die(element)
+    name_list.append(("dice",levels+half_die))
     return get_json(get_parent(element),name_list)
 
 def get_leaping_json(element):
@@ -202,6 +271,7 @@ def get_rka_json(element):
     return get_std_dice_power_json(element)
 
 def get_entangle_json(element):
+    #TODO:  add the defense value
     return get_std_dice_power_json(element)
 
 def get_infrared_json(element):
@@ -223,7 +293,6 @@ def get_telekinesis_json(element):
     #TODO:  get the value
     return get_json(get_parent(element),name_list)
 
-
 def get_invisibility_json(element):
     name_list = get_power_name_list(element)
     #TODO:  get the value
@@ -236,7 +305,7 @@ def get_mindcontrol_json(element):
 
 def get_teleport_json(element):
     name_list = get_power_name_list(element)
-    #TODO:  get the value
+    name_list.append(("inches",element.attrib['LEVELS']))
     return get_json(get_parent(element),name_list)
 
 def get_lifesupport_json(element):
@@ -275,6 +344,10 @@ def get_forcefield_json(element):
     name_list.append(("red",element.attrib['EDLEVELS']))
     return get_json(get_parent(element),name_list)
 
+def get_stretching_json(element):
+    name_list = get_power_name_list(element)
+    return get_json(get_parent(element),name_list)
+
 def get_missile_deflection_json(element):
     name_list = get_power_name_list(element)
     return get_json(get_parent(element),name_list)
@@ -310,9 +383,19 @@ def get_str_power_json(element):
     return get_characteristic_power("strength",element)
 
 def get_framework_json(element):
-    name_list = [("name",ITALICS+element.attrib['NAME']+ITALICS_END),("POWER_ID", element.attrib['XMLID'])]
+    pool = element.attrib['BASECOST']
+    title = ITALICS+element.attrib['NAME']+ITALICS_END
+    name_list = [("name",title),("POWER_ID", element.attrib['XMLID'])]
     name_list.append(("id",element.attrib['ID']))
-    name_list.append(("alias",element.attrib['ALIAS']))
+    alias_attrib = element.attrib['ALIAS']
+    alias = alias_attrib
+    if (pool != '0.0'):
+        alias = alias+", "+str(math.floor(float(pool)))+"-point"
+        if (alias_attrib == 'Multipower'):
+            alias = alias + " reserve"
+        if (alias_attrib == 'Elemental Control'):
+            alias = alias + " powers"
+    name_list.append(("alias",alias))
     name_list.append(get_modifier_tuple(element))
     return get_json(get_parent(element),name_list)
 
@@ -336,7 +419,11 @@ def get_language_json(element):
     else:
         literacy = "not literate"
 
-    return get_json(get_parent(element),[("name",ITALICS+name+ITALICS_END+': '+language+' ('+alias+'; '+literacy+')')])
+    title = language+' ('+alias+'; '+literacy+')'
+    if (name != ''):
+        title = ITALICS+name+ITALICS_END+': '+ title
+
+    return get_json(get_parent(element),[("name",title)])
 
 def get_csl_json(element):
     levels = element.attrib['LEVELS']
@@ -436,6 +523,7 @@ power_descriptors = {
     "TELEPATHY" : get_telepathy_json,
     "ULTRASONICPERCEPTION" : get_ultrasonic_json,
     "RUNNING" : get_running_json,
+    "STRETCHING" : get_stretching_json,
     "SWIMMING" : get_swimming_json,
     "TELEPORTATION" : get_teleport_json,
     "CON" : get_con_power_json,
@@ -471,7 +559,7 @@ def add_token_property(property_store, text, description):
     debug_print('property: '+description)
     ElementTree.SubElement(key_value,'outer-class',{'reference':'../../../..'})
 
-def add_powers(hdc_root, token_root):
+def add_powers(hdc_root, token_root, characteristics):
     for map in token_root.findall('propertyMapCI'):
         for store in map:
             property_store = store
@@ -494,7 +582,33 @@ def get_maneuver_json(element, characteristics):
 
     return get_json(get_parent(element),[("name",name)])
 
-def get_disad_json(element, characteristics):
+def get_perk_json(element):
+    name = element.attrib['NAME']
+    title = element.attrib['ALIAS']
+    if (name != ""):
+        title = ITALICS+name + ITALICS_END+': '+title
+
+    if (element.attrib.get('OPTION_ALIAS')!=None):
+        title = title + ' ('+element.attrib['OPTION_ALIAS']+')'
+
+    #todo get NOTES item
+    #todo get all ADDER items
+    return get_json(get_parent(element),[("name",title)])
+
+def get_talent_json(element):
+    name = element.attrib['NAME']
+    title = element.attrib['ALIAS']
+    if (name != ""):
+        title = ITALICS+name + ITALICS_END+': '+title
+
+    if (element.attrib.get('OPTION_ALIAS')!=None):
+        title = title + ' ('+element.attrib['OPTION_ALIAS']+')'
+
+    #todo get NOTES item
+    #todo get all ADDER items
+    return get_json(get_parent(element),[("name",title)])
+
+def get_disad_json(element):
     name = element.attrib['ALIAS']
     if (element.attrib.get('INPUT')!=None):
         name = name + ': '+element.attrib['INPUT']
@@ -503,7 +617,7 @@ def get_disad_json(element, characteristics):
     #todo get all ADDER items
     return get_json(get_parent(element),[("name",name)])
 
-def add_martial_arts(hdc_root, token_root):
+def add_martial_arts(hdc_root, token_root, characteristics):
 
     for map in token_root.findall('propertyMapCI'):
         for store in map:
@@ -569,6 +683,13 @@ def end_stat(found_characteristics, value):
 def stun_stat(found_characteristics, value):
     return (int(found_characteristics['BODY'])+10) + myround((int(found_characteristics['STR'])+10)/2) + myround((int(found_characteristics['CON'])+10)/2) +int(value)
 
+def running_stat(found_characteristics, value):
+    return 6+int(value)
+def swimming_stat(found_characteristics, value):
+    return 2+int(value)
+def leaping_stat(found_characteristics, value):
+    return myround((int(found_characteristics['STR'])+10)/5)+int(value)
+
 def primary_stat(found_characteristics, value):
     return 10+int(value)
 
@@ -599,7 +720,10 @@ def update_characteristics(hdc_root, token_root):
         'speed_base':('SPD',spd_stat),
         'recovery_base':('REC',rec_stat),
         'endurance_base':('END',end_stat),
-        'stun_base':('STUN',stun_stat)
+        'stun_base':('STUN',stun_stat),
+        'running_base':('RUNNING',running_stat),
+        'swimming_base':('SWIMMING',swimming_stat),
+        'leaping_base':('LEAPING',leaping_stat)
     }
 
     for map in token_root.findall('propertyMapCI'):
@@ -659,8 +783,10 @@ for n in range(1, len(sys.argv)):
     update_character_info(hdc_root, token_root)
     characteristics = update_characteristics(hdc_root, token_root)
     add_skills(hdc_root, token_root, characteristics)
-    add_martial_arts(hdc_root, token_root)
-    add_powers(hdc_root, token_root)
+    add_martial_arts(hdc_root, token_root, characteristics)
+    add_perks(hdc_root, token_root)
+    add_talents(hdc_root, token_root)
+    add_powers(hdc_root, token_root, characteristics)
     add_disads(hdc_root, token_root)
 
     update_zip(new_token_filename,'content.xml',ElementTree.tostring(token_root))
