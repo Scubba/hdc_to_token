@@ -167,6 +167,12 @@ def get_adder_tuple(element):
         adders = adders + name + more + comment_str
     return ("adders", adders)
 
+def get_special_modifier(mod, xmlid, levels):
+    ret_mod = mod
+    if (xmlid == 'ARMORPIERCING'):
+        ret_mod = str(int(levels)*0.5)
+    return ret_mod
+
 def get_modifier_tuple(element):
     modifiers = ""
     for sub in element.findall('MODIFIER'):
@@ -174,6 +180,9 @@ def get_modifier_tuple(element):
         name = get_safe_attrib(sub, 'ALIAS')
         more = get_safe_attrib(sub, 'OPTION_ALIAS')
         comment = get_safe_attrib(sub, 'COMMENTS')
+        levels = get_safe_attrib(sub, 'LEVELS')
+        xmlid = get_safe_attrib(sub, 'XMLID')
+        mod = get_special_modifier(mod, xmlid, levels)
         if (len(modifiers)):
             modifiers = modifiers + ", "
         if (len(name) and len(more)):
@@ -193,9 +202,13 @@ def get_half_die(element):
 
 def get_power_name_list(element):
     name = element.attrib['NAME']
+    if (name != ''):
+        name = ITALICS+name+ITALICS_END
     power_type = element.attrib['XMLID']
     alias = element.attrib['ALIAS']
-    name_list = [("name",ITALICS+name+ITALICS_END),("POWER_ID",power_type),("alias",alias)]
+    inputstr = get_safe_attrib(element,'INPUT')
+    optionalias = get_safe_attrib(element,'OPTION_ALIAS')
+    name_list = [("name",name),("POWER_ID",power_type),("alias",alias+" "+inputstr+optionalias)]
     name_list.append(("parent",get_parent(element)))
     if (get_safe_attrib(element,'ULTRA_SLOT')=="Yes"):
         name_list.append(("ultra","1"))
@@ -226,12 +239,17 @@ def get_leaping_json(element):
 
 def get_running_json(element):
     name_list = get_power_name_list(element)
-    name_list.append(("inches",str(6+int(element.attrib['LEVELS']))))
+    name_list.append(("inches",element.attrib['LEVELS']))
+    return get_json(get_parent(element),name_list)
+
+def get_flight_json(element):
+    name_list = get_power_name_list(element)
+    name_list.append(("inches",element.attrib['LEVELS']))
     return get_json(get_parent(element),name_list)
 
 def get_swimming_json(element):
     name_list = get_power_name_list(element)
-    name_list.append(("inches",str(6+int(element.attrib['LEVELS']))))
+    name_list.append(("inches",element.attrib['LEVELS']))
     return get_json(get_parent(element),name_list)
 
 def get_armor_json(element):
@@ -261,6 +279,9 @@ def get_drain_json(element):
 def get_dispel_json(element):
     return get_std_dice_power_json(element)
 
+def get_darkness_json(element):
+    return get_std_dice_power_json(element)
+
 def get_hka_json(element):
     return get_std_dice_power_json(element)
 
@@ -275,6 +296,18 @@ def get_entangle_json(element):
     return get_std_dice_power_json(element)
 
 def get_infrared_json(element):
+    name_list = get_power_name_list(element)
+    return get_json(get_parent(element),name_list)
+
+def get_radio_json(element):
+    name_list = get_power_name_list(element)
+    return get_json(get_parent(element),name_list)
+
+def get_spatial_awareness_json(element):
+    name_list = get_power_name_list(element)
+    return get_json(get_parent(element),name_list)
+
+def get_nightvision_json(element):
     name_list = get_power_name_list(element)
     return get_json(get_parent(element),name_list)
 
@@ -295,13 +328,11 @@ def get_telekinesis_json(element):
 
 def get_invisibility_json(element):
     name_list = get_power_name_list(element)
-    #TODO:  get the value
+    #TODO:  get the initial type (OPTION_ALIAS)
     return get_json(get_parent(element),name_list)
 
 def get_mindcontrol_json(element):
-    name_list = get_power_name_list(element)
-    #TODO:  get the value
-    return get_json(get_parent(element),name_list)
+    return get_std_dice_power_json(element)
 
 def get_teleport_json(element):
     name_list = get_power_name_list(element)
@@ -316,6 +347,11 @@ def get_lifesupport_json(element):
 def get_forcewall_json(element):
     name_list = get_power_name_list(element)
     #TODO:  get the value
+    return get_json(get_parent(element),name_list)
+
+def get_flashdefense_json(element):
+    name_list = get_power_name_list(element)
+    name_list.append(("flashdef", element.attrib['LEVELS']))
     return get_json(get_parent(element),name_list)
 
 def get_mentaldefense_json(element):
@@ -363,6 +399,9 @@ def get_characteristic_power(name, element):
     levels=element.attrib['LEVELS']
     name_list.append((name,levels))
     return get_json(get_parent(element),name_list)
+
+def get_body_power_json(element):
+    return get_characteristic_power("body",element)
 
 def get_con_power_json(element):
     return get_characteristic_power("constitution",element)
@@ -429,13 +468,26 @@ def get_csl_json(element):
     levels = element.attrib['LEVELS']
     name = element.attrib['NAME']
     alias = element.attrib['OPTION_ALIAS']
-    return get_json(get_parent(element),[("name",ITALICS+name+ITALICS_END),("alias",alias),("levels",str(levels))])
+    if (name != ""):
+        name = ITALICS+name+ITALICS_END
+    return get_json(get_parent(element),[("name",name),("alias",alias),("levels",str(levels))])
 
 def get_skill_level_json(element):
     levels = element.attrib['LEVELS']
     name = element.attrib['NAME']
     alias = element.attrib['OPTION_ALIAS']
-    return get_json(get_parent(element),[("name",ITALICS+name+ITALICS_END),("alias",alias),("levels",str(levels))])
+    if (name != ""):
+        name = ITALICS+name+ITALICS_END
+    return get_json(get_parent(element),[("name",name),("alias",alias),("levels",str(levels))])
+
+def get_penalty_skill_level_json(element):
+    levels = element.attrib['LEVELS']
+    name = element.attrib['NAME']
+    alias = element.attrib['OPTION_ALIAS']
+    inputstr = element.attrib['INPUT']
+    if (name != ""):
+        name = ITALICS+name+ITALICS_END
+    return get_json(get_parent(element),[("name",name),("alias","vs. "+inputstr+" with "+alias),("levels",str(levels))])
 
 def get_separator_json(element):
     alias = element.attrib['ALIAS']
@@ -469,6 +521,8 @@ def get_skill_json(element, characteristics):
         return get_separator_json(element)
     elif (skill_type == 'LANGUAGES'):
         return get_language_json(element)
+    elif (skill_type == 'PENALTY_SKILL_LEVELS'):
+        return get_penalty_skill_level_json(element)
 
     characteristic = get_safe_attrib(element,'CHARACTERISTIC')
     value = 11 + get_skill_bonus(characteristic, characteristics)
@@ -496,6 +550,7 @@ power_descriptors = {
     "CLINGING" : get_clinging_json,
     "COMBAT_LEVELS" : get_csl_json,
     "DAMAGERESISTANCE" : get_dr_json,
+    "DARKNESS" : get_darkness_json,
     "DISPEL" : get_dispel_json,
     "DRAIN" : get_drain_json,
     "EGOATTACK" : get_ego_attack_json,
@@ -503,6 +558,8 @@ power_descriptors = {
     "ENTANGLE" : get_entangle_json,
     "EXTRALIMBS" : get_extralimbs_json,
     "FLASH": get_flash_json,
+    "FLASHDEFENSE": get_flashdefense_json,
+    "FLIGHT": get_flight_json,
     "FORCEFIELD" : get_forcefield_json,
     "FORCEWALL" : get_forcewall_json,
     "GENERIC_OBJECT" : get_framework_json,
@@ -519,13 +576,17 @@ power_descriptors = {
     "MENTALDEFENSE" : get_mentaldefense_json,
     "MINDCONTROL" : get_mindcontrol_json,
     "MISSILEDEFLECTION" : get_missile_deflection_json,
+    "NIGHTVISION" : get_nightvision_json,
     "TELEKINESIS": get_telekinesis_json,
     "TELEPATHY" : get_telepathy_json,
+    "RADIOPERCEIVETRANSMIT": get_radio_json,
+    "SPATIALAWARENESS": get_spatial_awareness_json,
     "ULTRASONICPERCEPTION" : get_ultrasonic_json,
     "RUNNING" : get_running_json,
     "STRETCHING" : get_stretching_json,
     "SWIMMING" : get_swimming_json,
     "TELEPORTATION" : get_teleport_json,
+    "BODY": get_body_power_json,
     "CON" : get_con_power_json,
     "DEX" : get_dex_power_json,
     "ED" : get_ed_power_json,
