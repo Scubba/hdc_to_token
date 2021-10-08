@@ -237,6 +237,21 @@ def get_std_dice_power_json(element):
     name_list.append(("dice",levels+half_die))
     return get_json(get_parent(element),name_list)
 
+def get_endurancereserve_json(element):
+    name_list = get_power_name_list(element)
+    name_list.append(("end",element.attrib['LEVELS']))
+    return get_json(get_parent(element),name_list)
+
+def get_findweakness_json(element):
+    name_list = get_power_name_list(element)
+    name_list.append(("roll",str(11+int(element.attrib['LEVELS']))))
+    return get_json(get_parent(element),name_list)
+
+def get_kb_resistance_json(element):
+    name_list = get_power_name_list(element)
+    name_list.append(("inches",element.attrib['LEVELS']))
+    return get_json(get_parent(element),name_list)
+
 def get_movement_power_json(element):
     name_list = get_power_name_list(element)
     name_list.append(("inches",element.attrib['LEVELS']))
@@ -278,6 +293,9 @@ def get_telepathy_json(element):
     return get_std_dice_power_json(element)
 
 def get_flash_json(element):
+    return get_std_dice_power_json(element)
+
+def get_absorption_json(element):
     return get_std_dice_power_json(element)
 
 def get_drain_json(element):
@@ -565,6 +583,7 @@ def get_skill_json(element, characteristics):
 
 power_descriptors = {
     "AID" : get_aid_json,
+    "ABSORPTION": get_absorption_json,
     "ARMOR" : get_armor_json,
     "CLINGING" : get_clinging_json,
     "COMBAT_LEVELS" : get_csl_json,
@@ -573,9 +592,11 @@ power_descriptors = {
     "DISPEL" : get_dispel_json,
     "DRAIN" : get_drain_json,
     "EGOATTACK" : get_ego_attack_json,
+    "ENDURANCERESERVE" : get_endurancereserve_json,
     "ENERGYBLAST" : get_energyblast_json,
     "ENTANGLE" : get_entangle_json,
     "EXTRALIMBS" : get_extralimbs_json,
+    "FINDWEAKNESS" : get_findweakness_json,
     "FLASH": get_flash_json,
     "FLASHDEFENSE": get_flashdefense_json,
     "FLIGHT": get_flight_json,
@@ -589,6 +610,7 @@ power_descriptors = {
     "IMAGES": get_images_json,
     "INVISIBILITY": get_invisibility_json,
     "INFRAREDPERCEPTION": get_infrared_json,
+    "KBRESISTANCE": get_kb_resistance_json,
     "LEAPING" : get_leaping_json,
     "LIFESUPPORT" : get_lifesupport_json,
     "LUCK" : get_luck_json,
@@ -658,7 +680,10 @@ def add_powers(hdc_root, token_root, characteristics):
             power_count = power_count + 1
 
 def get_maneuver_json(element, characteristics):
-    name = element.attrib['DISPLAY']
+    name = get_safe_attrib(element,'DISPLAY')
+    alias = get_safe_attrib(element,'ALIAS')
+    if (name==""):
+        name = alias
 
     return get_json(get_parent(element),[("name",name)])
 
