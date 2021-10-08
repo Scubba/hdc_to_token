@@ -146,6 +146,14 @@ def get_mod_string(mod):
 
     return number_str
 
+def get_notes_tuple(element):
+    note = ""
+    for sub in element.findall('NOTES'):
+        note = sub.text
+        if (note != None):
+            return ("notes", note)
+    return ()
+
 def get_adder_tuple(element):
     adders = ""
     for sub in element.findall('ADDER'):
@@ -216,13 +224,11 @@ def get_power_name_list(element):
     name_list.append(get_modifier_tuple(element))
     name_list.append(get_adder_tuple(element))
 
-    return name_list
+    notes = get_notes_tuple(element)
+    if (notes!=()):
+        name_list.append(notes)
 
-def get_extralimbs_json(element):
-    name_list = get_power_name_list(element)
-    levels=element.attrib['LEVELS']
-    name_list.append(("limbs",levels))
-    return get_json(get_parent(element),name_list)
+    return name_list
 
 def get_std_dice_power_json(element):
     name_list = get_power_name_list(element)
@@ -231,26 +237,27 @@ def get_std_dice_power_json(element):
     name_list.append(("dice",levels+half_die))
     return get_json(get_parent(element),name_list)
 
-def get_leaping_json(element):
+def get_movement_power_json(element):
     name_list = get_power_name_list(element)
-    levels=element.attrib['LEVELS']
-    name_list.append(("inches",levels))
+    name_list.append(("inches",element.attrib['LEVELS']))
     return get_json(get_parent(element),name_list)
+
+def get_extralimbs_json(element):
+    name_list = get_power_name_list(element)
+    name_list.append(("limbs",element.attrib['LEVELS']))
+    return get_json(get_parent(element),name_list)
+
+def get_leaping_json(element):
+    return get_movement_power_json(element)
 
 def get_running_json(element):
-    name_list = get_power_name_list(element)
-    name_list.append(("inches",element.attrib['LEVELS']))
-    return get_json(get_parent(element),name_list)
+    return get_movement_power_json(element)
 
 def get_flight_json(element):
-    name_list = get_power_name_list(element)
-    name_list.append(("inches",element.attrib['LEVELS']))
-    return get_json(get_parent(element),name_list)
+    return get_movement_power_json(element)
 
 def get_swimming_json(element):
-    name_list = get_power_name_list(element)
-    name_list.append(("inches",element.attrib['LEVELS']))
-    return get_json(get_parent(element),name_list)
+    return get_movement_power_json(element)
 
 def get_armor_json(element):
     name_list = get_power_name_list(element)
@@ -335,9 +342,7 @@ def get_mindcontrol_json(element):
     return get_std_dice_power_json(element)
 
 def get_teleport_json(element):
-    name_list = get_power_name_list(element)
-    name_list.append(("inches",element.attrib['LEVELS']))
-    return get_json(get_parent(element),name_list)
+    return get_movement_power_json(element)
 
 def get_lifesupport_json(element):
     name_list = get_power_name_list(element)
@@ -468,17 +473,25 @@ def get_csl_json(element):
     levels = element.attrib['LEVELS']
     name = element.attrib['NAME']
     alias = element.attrib['OPTION_ALIAS']
+    tuples = [("name",name),("alias",alias),("levels",str(levels))]
+    notes = get_notes_tuple(element)
+    if (notes!=()):
+        tuples.append(notes)
     if (name != ""):
         name = ITALICS+name+ITALICS_END
-    return get_json(get_parent(element),[("name",name),("alias",alias),("levels",str(levels))])
+    return get_json(get_parent(element),tuples)
 
 def get_skill_level_json(element):
     levels = element.attrib['LEVELS']
     name = element.attrib['NAME']
     alias = element.attrib['OPTION_ALIAS']
+    tuples = [("name",name),("alias",alias),("levels",str(levels))]
+    notes = get_notes_tuple(element)
+    if (notes!=()):
+        tuples.append(notes)
     if (name != ""):
         name = ITALICS+name+ITALICS_END
-    return get_json(get_parent(element),[("name",name),("alias",alias),("levels",str(levels))])
+    return get_json(get_parent(element),tuples)
 
 def get_penalty_skill_level_json(element):
     levels = element.attrib['LEVELS']
@@ -540,9 +553,15 @@ def get_skill_json(element, characteristics):
         input_val = ": "+input_val
 
     if (characteristic == ''):
-        return get_json(get_parent(element),[("name",name),("alias",element.attrib['ALIAS']+input_val)])
+        tuples = [("name",name),("alias",element.attrib['ALIAS']+input_val)]
     else:
-        return get_json(get_parent(element),[("name",name),("alias",element.attrib['ALIAS']+input_val),("roll",str(value))])
+        tuples = [("name",name),("alias",element.attrib['ALIAS']+input_val),("roll",str(value))]
+
+    notes = get_notes_tuple(element)
+    if (notes!=()):
+        tuples.append(notes)
+    return get_json(get_parent(element),tuples)
+
 
 power_descriptors = {
     "AID" : get_aid_json,
@@ -673,10 +692,13 @@ def get_disad_json(element):
     name = element.attrib['ALIAS']
     if (element.attrib.get('INPUT')!=None):
         name = name + ': '+element.attrib['INPUT']
-
+    tuples = [("name",name)]
     #todo get NOTES item
+    notes = get_notes_tuple(element)
+    if (notes!=()):
+        tuples.append(notes)
     #todo get all ADDER items
-    return get_json(get_parent(element),[("name",name)])
+    return get_json(get_parent(element),tuples)
 
 def add_martial_arts(hdc_root, token_root, characteristics):
 
