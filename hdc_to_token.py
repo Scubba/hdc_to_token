@@ -138,7 +138,7 @@ def get_mod_string(mod):
     if (mod == "-0.75"):
         return "-¾"
     if (mod == "0.0"):
-        return ""
+        return "+0"
 
     number_str = str(math.floor(float(mod)))
     if (float(mod)>0):
@@ -191,6 +191,11 @@ def get_modifier_tuple(element):
         levels = get_safe_attrib(sub, 'LEVELS')
         xmlid = get_safe_attrib(sub, 'XMLID')
         mod = get_special_modifier(mod, xmlid, levels)
+
+        # things like clips adding to charges
+        for adder in sub.findall('ADDER'):
+            more = more + " " + get_safe_attrib(adder, 'ALIAS')
+
         if (len(modifiers)):
             modifiers = modifiers + ", "
         if (len(name) and len(more)):
@@ -700,6 +705,19 @@ def get_perk_json(element):
     #todo get all ADDER items
     return get_json(get_parent(element),[("name",title)])
 
+def get_combat_luck_tuples(element):
+    levels = get_safe_attrib(element,'LEVELS')
+    defense = 3 * levels
+    return [("pd", defense),
+            ("ed", defense),
+            ("rpd", defense),
+            ("red", defense)]
+
+talent_descriptors = {
+    "COMBAT_LUCK" : get_combat_luck_tuples
+}
+
+
 def get_talent_json(element):
     name = element.attrib['NAME']
     title = element.attrib['ALIAS']
@@ -709,9 +727,15 @@ def get_talent_json(element):
     if (element.attrib.get('OPTION_ALIAS')!=None):
         title = title + ' ('+element.attrib['OPTION_ALIAS']+')'
 
+    tuples = [("name",title)]
+
+    talent_type = element.attrib['XMLID']
+    if (talent_type in talent_descriptors):
+        tuples.append(talent_descriptors[talent_type](element))
+
     #todo get NOTES item
     #todo get all ADDER items
-    return get_json(get_parent(element),[("name",title)])
+    return get_json(get_parent(element),tuples)
 
 def get_disad_json(element):
     name = element.attrib['ALIAS']
