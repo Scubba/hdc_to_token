@@ -2,6 +2,8 @@
 
 The Python script converts a Hero Designer .hdc file into a MapTools .rptok file usable in Scubba's 5th Edition Hero System framework (https://github.com/Scubba/maptool_hero5e).
 
+This only works for Hero 5th Edition characters, 6th Edition is not supported at this time.
+
 ## Operation:
 
 (Windows) Drag your HeroDesigner .hdc file on the hdc_to_token.bat file in the File Explorer.  You should see a .rptok file created in the same folder as your .hdc file.  The results of the conversion will be output to output.txt.
