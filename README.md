@@ -4,6 +4,11 @@ The Python script converts a Hero Designer .hdc file into a MapTools .rptok file
 
 This only works for Hero 5th Edition characters, 6th Edition is not supported at this time.
 
+## Installation:
+Download all of the files to a local folder.  The converter makes use of the `sample.rptok` as the template file, updating and replacing properties and creating a new token file.
+
+Run the `make.sh` (Mac/Linux) to create a zipped distribution of the files.
+
 ## Operation:
 
 (Windows) Drag your HeroDesigner .hdc file on the hdc_to_token.bat file in the File Explorer.  You should see a .rptok file created in the same folder as your .hdc file.  The results of the conversion will be output to output.txt.
