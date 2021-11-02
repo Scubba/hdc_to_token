@@ -146,6 +146,16 @@ def get_mod_string(mod):
 
     return number_str
 
+def get_disad_options_tuple(element):
+    options = ""
+    for sub in element.findall('ADDER'):
+        opt_alias = get_safe_attrib(sub,'OPTION_ALIAS')
+        if (len(options)):
+            options = options +  " "
+        options = options + opt_alias
+
+    return ("options", options)
+
 def get_notes_tuple(element):
     note = ""
     for sub in element.findall('NOTES'):
@@ -225,6 +235,8 @@ def get_power_name_list(element):
     name_list.append(("parent",get_parent(element)))
     if (get_safe_attrib(element,'ULTRA_SLOT')=="Yes"):
         name_list.append(("ultra","1"))
+    if (get_safe_attrib(element,"USE_END_RESERVE")=="Yes"):
+        name_list.append(("use_end_reserve","1"))
 
     name_list.append(get_modifier_tuple(element))
     name_list.append(get_adder_tuple(element))
@@ -244,6 +256,13 @@ def get_std_dice_power_json(element):
 
 def get_endurancereserve_json(element):
     name_list = get_power_name_list(element)
+
+    #REC is stored in a POWER CHILD
+    for sub in element.findall('POWER'):
+        id = get_safe_attrib(sub, "XMLID")
+        if ("ENDURANCERESERVEREC" == id):
+            name_list.append(("rec",sub.attrib['LEVELS']))
+
     name_list.append(("end",element.attrib['LEVELS']))
     return get_json(get_parent(element),name_list)
 
@@ -377,6 +396,11 @@ def get_forcewall_json(element):
     #TODO:  get the value
     return get_json(get_parent(element),name_list)
 
+def get_detect_json(element):
+    name_list = get_power_name_list(element)
+    #TODO:  get the value
+    return get_json(get_parent(element),name_list)
+
 def get_flashdefense_json(element):
     name_list = get_power_name_list(element)
     name_list.append(("flashdef", element.attrib['LEVELS']))
@@ -385,6 +409,11 @@ def get_flashdefense_json(element):
 def get_mentaldefense_json(element):
     name_list = get_power_name_list(element)
     name_list.append(("mentaldef", element.attrib['LEVELS']))
+    return get_json(get_parent(element),name_list)
+
+def get_powerdefense_json(element):
+    name_list = get_power_name_list(element)
+    name_list.append(("powerdef", element.attrib['LEVELS']))
     return get_json(get_parent(element),name_list)
 
 def get_luck_json(element):
@@ -410,9 +439,15 @@ def get_forcefield_json(element):
 
 def get_stretching_json(element):
     name_list = get_power_name_list(element)
+    levels=element.attrib['LEVELS']
+    name_list.append(("reach",levels))
     return get_json(get_parent(element),name_list)
 
 def get_missile_deflection_json(element):
+    name_list = get_power_name_list(element)
+    return get_json(get_parent(element),name_list)
+
+def get_mind_link_json(element):
     name_list = get_power_name_list(element)
     return get_json(get_parent(element),name_list)
 
@@ -420,6 +455,12 @@ def get_clinging_json(element):
     name_list = get_power_name_list(element)
     levels=element.attrib['LEVELS']
     name_list.append(("str_add",levels))
+    return get_json(get_parent(element),name_list)
+
+def get_damage_reduction_json(element):
+    name_list = get_power_name_list(element)
+    opt=element.attrib['OPTION']
+    name_list.append(("damagereduction_opt",opt))
     return get_json(get_parent(element),name_list)
 
 def get_characteristic_power(name, element):
@@ -431,11 +472,17 @@ def get_characteristic_power(name, element):
 def get_body_power_json(element):
     return get_characteristic_power("body",element)
 
+def get_rec_power_json(element):
+    return get_characteristic_power("recovery",element)
+
 def get_con_power_json(element):
     return get_characteristic_power("constitution",element)
 
 def get_dex_power_json(element):
     return get_characteristic_power("dexterity",element)
+
+def get_end_power_json(element):
+    return get_characteristic_power("endurance",element)
 
 def get_ed_power_json(element):
     return get_characteristic_power("ed",element)
@@ -592,8 +639,10 @@ power_descriptors = {
     "ARMOR" : get_armor_json,
     "CLINGING" : get_clinging_json,
     "COMBAT_LEVELS" : get_csl_json,
+    "DAMAGEREDUCTION" : get_damage_reduction_json,
     "DAMAGERESISTANCE" : get_dr_json,
     "DARKNESS" : get_darkness_json,
+    "DETECT" : get_detect_json,
     "DISPEL" : get_dispel_json,
     "DRAIN" : get_drain_json,
     "EGOATTACK" : get_ego_attack_json,
@@ -621,8 +670,10 @@ power_descriptors = {
     "LUCK" : get_luck_json,
     "MENTALDEFENSE" : get_mentaldefense_json,
     "MINDCONTROL" : get_mindcontrol_json,
+    "MINDLINK" : get_mind_link_json,
     "MISSILEDEFLECTION" : get_missile_deflection_json,
     "NIGHTVISION" : get_nightvision_json,
+    "POWERDEFENSE" : get_powerdefense_json,
     "TELEKINESIS": get_telekinesis_json,
     "TELEPATHY" : get_telepathy_json,
     "RADIOPERCEIVETRANSMIT": get_radio_json,
@@ -635,8 +686,10 @@ power_descriptors = {
     "BODY": get_body_power_json,
     "CON" : get_con_power_json,
     "DEX" : get_dex_power_json,
+    "END" : get_end_power_json,
     "ED" : get_ed_power_json,
     "PD" : get_pd_power_json,
+    "REC" : get_rec_power_json,
     "SPD" : get_spd_power_json,
     "STR" : get_str_power_json
 }
@@ -747,6 +800,7 @@ def get_disad_json(element):
     if (notes!=()):
         tuples.append(notes)
     #todo get all ADDER items
+    tuples.append(get_disad_options_tuple(element))
     return get_json(get_parent(element),tuples)
 
 def add_martial_arts(hdc_root, token_root, characteristics):
