@@ -5,6 +5,7 @@
 
 import sys
 import shutil
+import time
 import os
 import zipfile
 import math
@@ -123,6 +124,17 @@ def add_disads(hdc_root, token_root):
                 get_disad_json(disad))
 
             disad_count = disad_count + 1
+
+def add_timestamp(hdc_root, token_root):
+    for map in token_root.findall('propertyMapCI'):
+        for store in map:
+            property_store = store
+
+    add_token_property(
+        property_store,
+        'convert_timestamp',
+        str(int(time.time())))
+
 
 def get_mod_string(mod):
     if (mod == "0.25"):
@@ -316,6 +328,9 @@ def get_ego_attack_json(element):
 def get_telepathy_json(element):
     return get_std_dice_power_json(element)
 
+def get_mentalillusions_json(element):
+    return get_std_dice_power_json(element)
+
 def get_flash_json(element):
     return get_std_dice_power_json(element)
 
@@ -344,7 +359,19 @@ def get_entangle_json(element):
     #TODO:  add the defense value
     return get_std_dice_power_json(element)
 
+def get_radar_json(element):
+    name_list = get_power_name_list(element)
+    return get_json(get_parent(element),name_list)
+
+def get_mental_awareness_json(element):
+    name_list = get_power_name_list(element)
+    return get_json(get_parent(element),name_list)
+
 def get_infrared_json(element):
+    name_list = get_power_name_list(element)
+    return get_json(get_parent(element),name_list)
+
+def get_ultraviolet_json(element):
     name_list = get_power_name_list(element)
     return get_json(get_parent(element),name_list)
 
@@ -360,7 +387,23 @@ def get_nightvision_json(element):
     name_list = get_power_name_list(element)
     return get_json(get_parent(element),name_list)
 
+def get_nray_perception_json(element):
+    name_list = get_power_name_list(element)
+    return get_json(get_parent(element),name_list)
+
+def get_lack_of_weakness_json(element):
+    name_list = get_power_name_list(element)
+    return get_json(get_parent(element),name_list)
+
 def get_ultrasonic_json(element):
+    name_list = get_power_name_list(element)
+    return get_json(get_parent(element),name_list)
+
+def get_activesonar_json(element):
+    name_list = get_power_name_list(element)
+    return get_json(get_parent(element),name_list)
+
+def get_changeenvironment_json(element):
     name_list = get_power_name_list(element)
     return get_json(get_parent(element),name_list)
 
@@ -483,6 +526,12 @@ def get_dex_power_json(element):
 
 def get_end_power_json(element):
     return get_characteristic_power("endurance",element)
+
+def get_int_power_json(element):
+    return get_characteristic_power("intelligence",element)
+
+def get_pre_power_json(element):
+    return get_characteristic_power("presence",element)
 
 def get_ed_power_json(element):
     return get_characteristic_power("ed",element)
@@ -636,7 +685,9 @@ def get_skill_json(element, characteristics):
 power_descriptors = {
     "AID" : get_aid_json,
     "ABSORPTION": get_absorption_json,
+    "ACTIVESONAR": get_activesonar_json,
     "ARMOR" : get_armor_json,
+    "CHANGEENVIRONMENT": get_changeenvironment_json,
     "CLINGING" : get_clinging_json,
     "COMBAT_LEVELS" : get_csl_json,
     "DAMAGEREDUCTION" : get_damage_reduction_json,
@@ -665,30 +716,38 @@ power_descriptors = {
     "INVISIBILITY": get_invisibility_json,
     "INFRAREDPERCEPTION": get_infrared_json,
     "KBRESISTANCE": get_kb_resistance_json,
+    "LACKOFWEAKNESS" : get_lack_of_weakness_json,
     "LEAPING" : get_leaping_json,
     "LIFESUPPORT" : get_lifesupport_json,
     "LUCK" : get_luck_json,
+    "MENTALAWARENESS" : get_mental_awareness_json,
     "MENTALDEFENSE" : get_mentaldefense_json,
+    "MENTALILLUSIONS" : get_mentalillusions_json,
     "MINDCONTROL" : get_mindcontrol_json,
     "MINDLINK" : get_mind_link_json,
     "MISSILEDEFLECTION" : get_missile_deflection_json,
     "NIGHTVISION" : get_nightvision_json,
+    "NRAYPERCEPTION" : get_nray_perception_json,
     "POWERDEFENSE" : get_powerdefense_json,
     "TELEKINESIS": get_telekinesis_json,
     "TELEPATHY" : get_telepathy_json,
     "RADIOPERCEIVETRANSMIT": get_radio_json,
     "SPATIALAWARENESS": get_spatial_awareness_json,
     "ULTRASONICPERCEPTION" : get_ultrasonic_json,
+    "RADAR" : get_radar_json,
     "RUNNING" : get_running_json,
     "STRETCHING" : get_stretching_json,
     "SWIMMING" : get_swimming_json,
     "TELEPORTATION" : get_teleport_json,
+    "ULTRAVIOLETPERCEPTION" : get_ultraviolet_json,
     "BODY": get_body_power_json,
     "CON" : get_con_power_json,
     "DEX" : get_dex_power_json,
     "END" : get_end_power_json,
     "ED" : get_ed_power_json,
     "PD" : get_pd_power_json,
+    "INT" : get_int_power_json,
+    "PRE" : get_pre_power_json,
     "REC" : get_rec_power_json,
     "SPD" : get_spd_power_json,
     "STR" : get_str_power_json
@@ -974,6 +1033,7 @@ for n in range(1, len(sys.argv)):
     add_talents(hdc_root, token_root)
     add_powers(hdc_root, token_root, characteristics)
     add_disads(hdc_root, token_root)
+    add_timestamp(hdc_root, token_root)
 
     update_zip(new_token_filename,'content.xml',ElementTree.tostring(token_root))
     print("Done.")
