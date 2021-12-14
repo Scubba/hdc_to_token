@@ -843,7 +843,7 @@ def get_talent_json(element):
 
     talent_type = element.attrib['XMLID']
     if (talent_type in talent_descriptors):
-        tuples.append(talent_descriptors[talent_type](element))
+        tuples = tuples + talent_descriptors[talent_type](element)
 
     #todo get NOTES item
     #todo get all ADDER items
