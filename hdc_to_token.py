@@ -328,6 +328,9 @@ def get_adders(element):
         if (len(name) and len(more)):
             more = " " + more
         mod_str = get_mod_string(mod)
+        # don't show '+0' if we have an adder
+        if (len(level_cost) and mod == '0.0'):
+            mod_str = ""
         if (len(comment) and len(mod_str)):
             comment = comment + " "
         if (len(comment) + len(mod_str)>0):
@@ -404,7 +407,7 @@ def get_power_name_list(element, base_cost):
     adders = get_adders(element)
     name_list.append(adders[0])
 
-#TODO: need to get max end cost for some
+    #TODO: need to get max end cost for some
     name_list.append(("end",get_end_cost(element, base_cost + adders[1])))
 
     notes = get_notes_tuple(element)
@@ -560,7 +563,6 @@ def get_energyblast_json(element, characteristics):
     return get_std_dice_power_json(element)
 
 def get_entangle_json(element, characteristics):
-    #TODO:  is additional def/body handled correctly by adders/modifiers?
     return get_10pt_dice_power_json(element)
 
 def get_extralimbs_json(element, characteristics):
