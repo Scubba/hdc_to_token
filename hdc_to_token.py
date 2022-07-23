@@ -511,6 +511,11 @@ def get_clinging_json(element, characteristics):
     name_list.append(("str_add",str(3*int(levels))))
     return get_json(get_parent(element),name_list)
 
+def get_custom_power_json(element, characteristics):
+    levels=element.attrib['LEVELS']
+    name_list = get_power_name_list(element, int(levels))
+    return get_json(get_parent(element),name_list)
+
 def get_damage_reduction_json(element, characteristics):
     bc = get_safe_attrib(element, 'BASECOST')
     name_list = get_power_name_list(element, round(float(bc)))
@@ -522,6 +527,11 @@ def get_darkness_json(element, characteristics):
     radius = element.attrib['LEVELS']
     name_list = get_power_name_list(element, 10*int(radius))
     name_list.append(("radius",radius))
+    return get_json(get_parent(element),name_list)
+
+def get_desol_json(element, characteristics):
+    bc = round(float(get_safe_attrib(element, 'BASECOST')))
+    name_list = get_power_name_list(element, bc)
     return get_json(get_parent(element),name_list)
 
 def get_dispel_json(element, characteristics):
@@ -659,6 +669,9 @@ def get_mentaldefense_json(element, characteristics):
 def get_mentalillusions_json(element, characteristics):
     return get_std_dice_power_json(element)
 
+def get_mind_scan_json(element, characteristics):
+    return get_std_dice_power_json(element)
+
 def get_mindcontrol_json(element, characteristics):
     return get_std_dice_power_json(element)
 
@@ -695,6 +708,10 @@ def get_telekinesis_json(element, characteristics):
 
 def get_telepathy_json(element, characteristics):
     return get_std_dice_power_json(element)
+
+
+def get_transform_json(element, characteristics):
+    return get_ka_dice_power_json(element)
 
 
 # Enhanced Senses
@@ -774,8 +791,14 @@ def get_body_power_json(element, characteristics):
 def get_rec_power_json(element, characteristics):
     return get_characteristic_power("recovery",element)
 
+def get_stun_power_json(element, characteristics):
+    return get_characteristic_power("stun",element)
+
 def get_con_power_json(element, characteristics):
     return get_characteristic_power("constitution",element)
+
+def get_com_power_json(element, characteristics):
+    return get_characteristic_power("comeliness",element)
 
 def get_dex_power_json(element, characteristics):
     return get_characteristic_power("dexterity",element)
@@ -947,11 +970,14 @@ power_descriptors = {
     "AID" : (get_aid_json, False),
     "ARMOR" : (get_armor_json, False),
     "CHANGEENVIRONMENT" : (get_changeenvironment_json, True),
+    "CLAIRSENTIENCE" : (get_custom_power_json, True),
     "CLINGING" : (get_clinging_json, False),
     "COMBAT_LEVELS" : (get_csl_json, False),
+    "CUSTOMPOWER" : (get_custom_power_json, False),
     "DAMAGEREDUCTION" : (get_damage_reduction_json, False),
     "DAMAGERESISTANCE" : (get_damage_resistance_json, False),
     "DARKNESS" : (get_darkness_json, True),
+    "DESOLIDIFICATION" : (get_desol_json, True),
     "DISPEL" : (get_dispel_json, False),
     "DRAIN" : (get_drain_json, False),
     "EGOATTACK" : (get_ego_attack_json, True),
@@ -976,6 +1002,7 @@ power_descriptors = {
     "FLASH" : (get_flash_json, True),
     "FLASHDEFENSE" : (get_flashdefense_json, False),
     "FLIGHT" : (get_flight_json, True),
+    "FLOATINGLOCATION": (get_custom_power_json, False),
     "FORCEFIELD" : (get_forcefield_json, True),
     "FORCEWALL" : (get_forcewall_json, True),
     "GENERIC_OBJECT" : (get_framework_json, False),
@@ -994,19 +1021,24 @@ power_descriptors = {
     "MENTALILLUSIONS" : (get_mentalillusions_json, True),
     "MINDCONTROL" : (get_mindcontrol_json, True),
     "MINDLINK" : (get_mind_link_json, False),
+    "MINDSCAN" : (get_mind_scan_json, True),
     "MISSILEDEFLECTION" : (get_missile_deflection_json, False),
+    "NEGATIVESKILLLEVELS" : (get_custom_power_json, True),
     "POWERDEFENSE" : (get_powerdefense_json, False),
     "RKA" : (get_rka_json, True),
     "RUNNING" : (get_running_json, True),
+    "SHAPESHIFT" : (get_custom_power_json, True),
     "STRETCHING" : (get_stretching_json, True),
     "SWIMMING" : (get_swimming_json, True),
     "TELEPORTATION" : (get_teleport_json, True),
     "TELEKINESIS": (get_telekinesis_json, True),
     "TELEPATHY" : (get_telepathy_json, True),
+    "TRANSFORM" : (get_transform_json, True),
 
     #characterstics as powers
     "BODY"  : (get_body_power_json, False),
     "CON" : (get_con_power_json, False),
+    "COM" : (get_com_power_json, False),
     "DEX" : (get_dex_power_json, False),
     "END" : (get_end_power_json, False),
     "ED" : (get_ed_power_json, False),
@@ -1015,7 +1047,8 @@ power_descriptors = {
     "PRE" : (get_pre_power_json, False),
     "REC" : (get_rec_power_json, False),
     "SPD" : (get_spd_power_json, False),
-    "STR" : (get_str_power_json, True)
+    "STR" : (get_str_power_json, True),
+    "STUN" : (get_stun_power_json, False)
 }
 
 def get_power_json(element, characteristics):
